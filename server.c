@@ -64,10 +64,15 @@ void *run_client(void *arg);
 void *monitor_signal(void *arg);
 void thread_cleanup(void *arg);
 
+// 1 if being accepted, 0 otherwise
+int accepted = 0;
+
+
 // Called by client threads to wait until progress is permitted
 void client_control_wait() {
     // TODO: Block the calling thread until the main thread calls
     // client_control_release(). See the client_control_t struct.
+
 }
 
 // Called by main thread to stop client threads
@@ -83,7 +88,7 @@ void client_control_release() {
 }
 
 // Called by listener (in comm.c) to create a new client thread
-void client_constructor(FILE *cxstr) {
+void client_constructor(FILE *cxstr) { // is server()
     // You should create a new client_t struct here and initialize ALL
     // of its fields. Remember that these initializations should be
     // error-checked.
@@ -93,12 +98,33 @@ void client_constructor(FILE *cxstr) {
     // to the input argument.
     // Step 2: Create the new client thread running the run_client routine.
     // Step 3: Detach the new client thread
+
+    // create and start a thread
+    client_t *newClient;
+    if ((newClient = malloc(sizeof(client_t))) == 0) {
+        perror("malloc");
+        exit(1);
+    }
+    newClient->cxstr = cxstr;
+    newClient->next = NULL;
+    newClient->prev = NULL;
+    int err1;
+    if ((err1 = pthread_create(&newClient->thread,0,run_client,newClient)) != 0) {
+        handle_error_en(err1, "pthread_create");
+    }
+    int err2;
+    if ((err2 = pthread_detach(newClient->thread)) != 0) {
+        handle_error_en(err2, "pthread_detach");
+    }
 }
 
 void client_destructor(client_t *client) {
     // TODO: Free and close all resources associated with a client.
     // Whatever was malloc'd in client_constructor should
     // be freed here!
+
+    comm_shutdown(client->cxstr);
+    free(client);
 }
 
 // Code executed by a client thread
@@ -115,6 +141,48 @@ void *run_client(void *arg) {
     //
     // You will need to modify this when implementing functionality for stop and
     // go!
+    client_t *client = (client_t *) arg;
+    // insert into threadlist, increment number of threads
+    pthread_mutex_lock(&thread_list_mutex);
+    // ensure that clients are still being accepted
+    if (accepted == 1) { 
+        // use prev and next to insert
+        if (thread_list_head == NULL) {
+            thread_list_head = client;
+            client->prev = NULL;
+            client->next = NULL;
+        }
+        else {
+            client_t *curr = thread_list_head;
+            while (curr->next != NULL) {
+                curr = curr->next;
+            }
+            curr->next = client;
+            client->prev = curr;
+            client->next = NULL;
+        }
+        pthread_mutex_lock(&server_control->server_mutex); // lock to incrememnt # clients
+        server_control->num_client_threads++;
+        pthread_mutex_unlock(&server_control->server_mutex);
+        pthread_mutex_unlock(&thread_list_mutex);
+        pthread_cleanup_push(thread_cleanup,client);
+        // here, we process the commands
+        // createa a buffer and call memset
+        char response[BUFLEN];
+        char command[BUFLEN];
+        memset(command,0,BUFLEN);
+        memset(response,0,BUFLEN);
+        while (comm_serve(client->cxstr,response,command) == 0) {
+            client_control_wait(); // make sure running client
+            interpret_command(command,response,BUFLEN);
+        }
+        return NULL;
+    }
+    else{
+        client_destructor(client);
+        pthread_mutex_unlock(&thread_list_mutex);
+        return NULL;
+    }
     return NULL;
 }
 
@@ -171,6 +239,9 @@ int main(int argc, char *argv[]) {
     // happens in a call to delete_all() and ensure that there is no way for a
     // thread to add itself to the thread list after the server's final
     // delete_all().
-
+    
+    
+    pthread_t listener = start_listener(atoi(argv[1]), client_constructor);
+    
     return 0;
 }
