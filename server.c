@@ -266,6 +266,7 @@ void sig_handler_destructor(sig_handler_t *sighandler) {
 }
 
 // The arguments to the server should be the port number.
+// returns 1 if there was an error
 int main(int argc, char *argv[]) {
     // TODO:
     // Step 1: Set up the signal handler for handling SIGINT.
@@ -283,11 +284,26 @@ int main(int argc, char *argv[]) {
     // thread to add itself to the thread list after the server's final
     // delete_all().
     
-    
-    pthread_t listener = start_listener(atoi(argv[1]), client_constructor);
-    // block SIGPIPE
-    while (1) { // step 4
 
+    sig_handler_constructor();
+    signal(SIGPIPE, SIG_IGN);
+    pthread_t listener = start_listener(atoi(argv[1]), client_constructor);
+    
+    while (1) { // step 4
+        char buf[BUFLEN];
+        memset(buf, '\0', BUFLEN);
+        int fd = STDIN_FILENO;
+        size_t count = BUFLEN;
+        ssize_t to_read;
+        to_read = read(fd, buf, count);
+        if (to_read == -1) {
+            perror("error: read");
+            return 1;
+        }
+        //else if (to_read == 0) {  // restart program
+            
+        //     return 0;  // 0 -> EOF
+        // }
     }
 
 
