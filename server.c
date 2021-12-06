@@ -287,7 +287,7 @@ int main(int argc, char *argv[]) {
 
     sig_handler_constructor();
     signal(SIGPIPE, SIG_IGN);
-    pthread_t listener = start_listener(atoi(argv[1]), client_constructor);
+    pthread_t listener = start_listener(atoi(&argv[1]), client_constructor);
     
     while (1) { // step 4
         char buf[BUFLEN];
