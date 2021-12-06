@@ -122,7 +122,6 @@ void client_destructor(client_t *client) {
     // TODO: Free and close all resources associated with a client.
     // Whatever was malloc'd in client_constructor should
     // be freed here!
-    accepted = 0;
     comm_shutdown(client->cxstr);
     free(client);
 }
@@ -226,18 +225,20 @@ void thread_cleanup(void *arg) {
     if (client == thread_list_head) {
         thread_list_head = client->next;
     }
-    while (curr->next != client) {
+    // also if it is the last one
+    else {
+        while (curr->next != client) {
         curr = curr->next;
-    }
+        }
         curr->next = client->next;
-        curr->prev = curr;
-        client->prev = NULL;
-        client->next = NULL;
+        // curr->prev = curr;
+        // client->prev = curr;
+        client->next->prev = client->prev;
+    }
     // just modify the pointers
     // account for case where you remove the threadlist head (update head to be the next elt)
+    pthread_mutex_unlock(&thread_list_mutex);
     client_destructor(client);
-    pthread_mutex_unlock(&thread_list_mutex); // need to unlock it
-    free(arg);
     return NULL;
 }
 
@@ -289,13 +290,17 @@ int main(int argc, char *argv[]) {
     signal(SIGPIPE, SIG_IGN);
     pthread_t listener = start_listener(atoi(&argv[1]), client_constructor);
     
+    // how do i access source and dest buffers created within run_client
+    // accepted = 1;
     while (1) { // step 4
         char buf[BUFLEN];
         memset(buf, '\0', BUFLEN);
         int fd = STDIN_FILENO;
         size_t count = BUFLEN;
         ssize_t to_read;
-        to_read = read(fd, buf, count);
+        // to_read = read(source, buf, count);
+        // write(dest,buf,to_read)
+        to_read = read(fd, buf, count); // read from input
         if (to_read == -1) {
             perror("error: read");
             return 1;
@@ -304,8 +309,10 @@ int main(int argc, char *argv[]) {
             
         //     return 0;  // 0 -> EOF
         // }
+        // read stop go, etc.. call appropriate commands
+        // buf at index zero (as long as to_read >0)
     }
-
+    // set accepted to 0 when have EOF (stop accepting)
 
     return 0;
 }
