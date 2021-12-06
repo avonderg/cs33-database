@@ -65,8 +65,8 @@ void *monitor_signal(void *arg);
 void thread_cleanup(void *arg);
 
 // 1 if being accepted, 0 otherwise
-int accepted = 0;
-
+int accepted = 1;
+server_control_t *server;
 
 // Called by client threads to wait until progress is permitted
 void client_control_wait() {
@@ -122,7 +122,7 @@ void client_destructor(client_t *client) {
     // TODO: Free and close all resources associated with a client.
     // Whatever was malloc'd in client_constructor should
     // be freed here!
-
+    accepted = 0;
     comm_shutdown(client->cxstr);
     free(client);
 }
@@ -142,8 +142,10 @@ void *run_client(void *arg) {
     // You will need to modify this when implementing functionality for stop and
     // go!
     client_t *client = (client_t *) arg;
-    // insert into threadlist, increment number of threads
-    pthread_mutex_lock(&thread_list_mutex);
+    int err1;
+    if ((err1 = pthread_mutex_lock(&thread_list_mutex)) != 0) {
+        handle_error_en(err1, "pthread_mutex_lock");
+    }
     // ensure that clients are still being accepted
     if (accepted == 1) { 
         // use prev and next to insert
@@ -161,10 +163,19 @@ void *run_client(void *arg) {
             client->prev = curr;
             client->next = NULL;
         }
-        pthread_mutex_lock(&server_control->server_mutex); // lock to incrememnt # clients
-        server_control->num_client_threads++;
-        pthread_mutex_unlock(&server_control->server_mutex);
-        pthread_mutex_unlock(&thread_list_mutex);
+        int err2;
+        if ((err2 = pthread_mutex_lock(&server->server_mutex)) != 0) { // lock to increment # clients
+            handle_error_en(err2, "pthread_mutex_lock");
+        }
+        server->num_client_threads++;
+        int err3;
+        if ((err3 = pthread_mutex_unlock(&server->server_mutex)) != 0) { // lock to increment # clients
+            handle_error_en(err3, "pthread_mutex_unlock");
+        }
+        int err4;
+        if ((err4 = pthread_mutex_unlock(&thread_list_mutex)) != 0) { // lock to increment # clients
+            handle_error_en(err4, "pthread_mutex_unlock");
+        }
         pthread_cleanup_push(thread_cleanup,client);
         // here, we process the commands
         // createa a buffer and call memset
@@ -172,23 +183,36 @@ void *run_client(void *arg) {
         char command[BUFLEN];
         memset(command,0,BUFLEN);
         memset(response,0,BUFLEN);
-        while (comm_serve(client->cxstr,response,command) == 0) {
-            client_control_wait(); // make sure running client
-            interpret_command(command,response,BUFLEN);
+            while (comm_serve(client->cxstr,response,command) == 0) { //cancellation point
+                client_control_wait(); // make sure running client (if stop = true), makes sure threads wait
+                interpret_command(command,response,BUFLEN);
+            }
+        pthread_cleanup_pop(1);
+        return NULL;
+    }
+    else {
+        client_destructor(client);
+        int err;
+        if ((err = pthread_mutex_unlock(&thread_list_mutex)) != 0) { 
+            handle_error_en(err, "pthread_mutex_unlock");
         }
         return NULL;
     }
-    else{
-        client_destructor(client);
-        pthread_mutex_unlock(&thread_list_mutex);
-        return NULL;
-    }
-    return NULL;
 }
-
-void delete_all() {
+// before you call, make sure thread list mutex is locked
+void delete_all() { // make sure you don't cancel before you pushed to cleanup (mutexes)
     // TODO: Cancel every thread in the client thread list with the
     // pthread_cancel function.
+    // check handout
+    client_t *curr = thread_list_head;
+    while (curr->next != NULL) {
+        int err;
+        if ((err = pthread_cancel(curr->thread)) != 0) { 
+            handle_error_en(err, "pthread_cancel");
+        }
+        curr = curr->next;
+    }
+    return NULL;
 }
 
 // Cleanup routine for client threads, called on cancels and exit.
@@ -196,6 +220,25 @@ void thread_cleanup(void *arg) {
     // TODO: Remove the client object from thread list and call
     // client_destructor. This function must be thread safe! The client must
     // be in the list before this routine is ever run.
+    client_t *client = (client_t *) arg;
+    pthread_mutex_lock(&thread_list_mutex);
+    client_t *curr = thread_list_head;
+    if (client == thread_list_head) {
+        thread_list_head = client->next;
+    }
+    while (curr->next != client) {
+        curr = curr->next;
+    }
+        curr->next = client->next;
+        curr->prev = curr;
+        client->prev = NULL;
+        client->next = NULL;
+    // just modify the pointers
+    // account for case where you remove the threadlist head (update head to be the next elt)
+    client_destructor(client);
+    pthread_mutex_unlock(&thread_list_mutex); // need to unlock it
+    free(arg);
+    return NULL;
 }
 
 // Code executed by the signal handler thread. For the purpose of this
@@ -242,6 +285,11 @@ int main(int argc, char *argv[]) {
     
     
     pthread_t listener = start_listener(atoi(argv[1]), client_constructor);
-    
+    // block SIGPIPE
+    while (1) { // step 4
+
+    }
+
+
     return 0;
 }
