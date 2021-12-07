@@ -284,12 +284,12 @@ int main(int argc, char *argv[]) {
     // happens in a call to delete_all() and ensure that there is no way for a
     // thread to add itself to the thread list after the server's final
     // delete_all().
-    
-
+    sigset_t signal;
+    sigemptyset(&signal);
+    sigaddset(&signal, SIGPIPE);
+    pthread_sigmask(SIG_BLOCK, &signal, NULL); // error check
     sig_handler_constructor();
-    signal(SIGPIPE, SIG_IGN);
     pthread_t listener = start_listener(atoi(argv[1]), client_constructor);
-    
     // how do i access source and dest buffers created within run_client
     // accepted = 1;
     while (1) { // step 4
