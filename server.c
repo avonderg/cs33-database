@@ -148,20 +148,20 @@ void *run_client(void *arg) {
     // ensure that clients are still being accepted
     if (accepted == 1) { 
         // use prev and next to insert
-        if (thread_list_head == NULL) {
-            thread_list_head = client;
-            client->prev = NULL;
-            client->next = NULL;
-        }
-        else {
-            client_t *curr = thread_list_head;
-            while (curr->next != NULL) {
-                curr = curr->next;
-            }
-            curr->next = client;
-            client->prev = curr;
-            client->next = NULL;
-        }
+        // if (thread_list_head == NULL) {
+        //     thread_list_head = client;
+        //     client->prev = NULL;
+        //     client->next = NULL;
+        // }
+        // else {
+        //     client_t *curr = thread_list_head;
+        //     while (curr->next != NULL) {
+        //         curr = curr->next;
+        //     }
+        //     curr->next = client;
+        //     client->prev = curr;
+        //     client->next = NULL;
+        // }
         int err2;
         if ((err2 = pthread_mutex_lock(&server->server_mutex)) != 0) { // lock to increment # clients
             handle_error_en(err2, "pthread_mutex_lock");
@@ -306,7 +306,7 @@ int main(int argc, char *argv[]) {
             return 1;
         }
         //else if (to_read == 0) {  // restart program
-            
+            // accepted = 0;
         //     return 0;  // 0 -> EOF
         // }
         // read stop go, etc.. call appropriate commands
