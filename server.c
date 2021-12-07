@@ -66,7 +66,7 @@ void thread_cleanup(void *arg);
 
 // 1 if being accepted, 0 otherwise
 int accepted = 1;
-server_control_t *server;
+server_control_t server = {PTHREAD_MUTEX_INITIALIZER,PTHREAD_COND_INITIALIZER,0};
 
 // Called by client threads to wait until progress is permitted
 void client_control_wait() {
@@ -148,27 +148,27 @@ void *run_client(void *arg) {
     // ensure that clients are still being accepted
     if (accepted == 1) { 
         // use prev and next to insert
-        // if (thread_list_head == NULL) {
-        //     thread_list_head = client;
-        //     client->prev = NULL;
-        //     client->next = NULL;
-        // }
-        // else {
-        //     client_t *curr = thread_list_head;
-        //     while (curr->next != NULL) {
-        //         curr = curr->next;
-        //     }
-        //     curr->next = client;
-        //     client->prev = curr;
-        //     client->next = NULL;
-        // }
+        if (thread_list_head == NULL) {
+            thread_list_head = client;
+            client->prev = NULL;
+            client->next = NULL;
+        }
+        else {
+            client_t *curr = thread_list_head;
+            while (curr->next != NULL) {
+                curr = curr->next;
+            }
+            curr->next = client;
+            client->prev = curr;
+            client->next = NULL;
+        }
         int err2;
-        if ((err2 = pthread_mutex_lock(&server->server_mutex)) != 0) { // lock to increment # clients
+        if ((err2 = pthread_mutex_lock(&server.server_mutex)) != 0) { // lock to increment # clients
             handle_error_en(err2, "pthread_mutex_lock");
         }
-        server->num_client_threads++;
+        server.num_client_threads++;
         int err3;
-        if ((err3 = pthread_mutex_unlock(&server->server_mutex)) != 0) { // lock to increment # clients
+        if ((err3 = pthread_mutex_unlock(&server.server_mutex)) != 0) { // lock to increment # clients
             handle_error_en(err3, "pthread_mutex_unlock");
         }
         int err4;
