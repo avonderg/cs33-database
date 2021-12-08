@@ -209,6 +209,9 @@ void delete_all() { // make sure you don't cancel before you pushed to cleanup (
         if ((err = pthread_cancel(curr->thread)) != 0) { 
             handle_error_en(err, "pthread_cancel");
         }
+        pthread_mutex_lock(&server.num_client_threads);
+        server.num_client_threads--;
+        pthread_mutex_unlock(&server.num_client_threads);
         curr = curr->next;
     }
     return NULL;
@@ -222,10 +225,12 @@ void thread_cleanup(void *arg) {
     client_t *client = (client_t *) arg;
     pthread_mutex_lock(&thread_list_mutex);
     client_t *curr = thread_list_head;
-    if (client == thread_list_head) {
+    if (client == thread_list_head) { // if it is at the head of list
         thread_list_head = client->next;
     }
-    // also if it is the last one
+    else if (client->next == NULL) { // if it is at the end of the list
+        client->prev->next = NULL;
+    }
     else {
         while (curr->next != client) {
         curr = curr->next;
@@ -235,8 +240,6 @@ void thread_cleanup(void *arg) {
         // client->prev = curr;
         client->next->prev = client->prev;
     }
-    // just modify the pointers
-    // account for case where you remove the threadlist head (update head to be the next elt)
     pthread_mutex_unlock(&thread_list_mutex);
     client_destructor(client);
     return NULL;
@@ -252,18 +255,41 @@ void thread_cleanup(void *arg) {
 void *monitor_signal(void *arg) {
     // TODO: Wait for a SIGINT to be sent to the server process and cancel
     // all client threads when one arrives.
+    sigset_t *sig = (sigset_t *) arg;
+    int signal;
+    while(1) {
+      sigwait(sig,&signal);
+      if (signal == SIGINT){
+        pthread_mutex_lock(&thread_list_mutex);
+        delete_all();
+        pthread_mutex_unlock(&thread_list_mutex);
+      } 
+    }
     return NULL;
 }
 
 sig_handler_t *sig_handler_constructor() {
     // TODO: Create a thread to handle SIGINT. The thread that this function
     // creates should be the ONLY thread that ever responds to SIGINT.
-    return NULL;
+    sig_handler_t *sig;
+    if ((sig = malloc(sizeof(sig_handler_t))) == 0) {
+        perror("malloc");
+        exit(1);
+    }
+    sigemptyset(&sig->set);
+    sigaddset(&sig->set, SIGINT);
+    // create thread
+    pthread_sigmask(SIG_BLOCK, &sig->set, 0); // error check
+    pthread_create(&sig->thread, 0, monitor_signal, &sig->set); // error check
+    return sig;
 }
 
 void sig_handler_destructor(sig_handler_t *sighandler) {
     // TODO: Free any resources allocated in sig_handler_constructor.
     // Cancel and join with the signal handler's thread.
+    pthread_cancel(sighandler->thread); // error check
+    pthread_join(sighandler->thread, NULL); // error check
+    free(sighandler);
 }
 
 // The arguments to the server should be the port number.
@@ -288,7 +314,7 @@ int main(int argc, char *argv[]) {
     sigemptyset(&signal);
     sigaddset(&signal, SIGPIPE);
     pthread_sigmask(SIG_BLOCK, &signal, NULL); // error check
-    sig_handler_constructor();
+    sig_handler_t *sig = sig_handler_constructor();
     pthread_t listener = start_listener(atoi(argv[1]), client_constructor);
     // how do i access source and dest buffers created within run_client
     // accepted = 1;
@@ -305,14 +331,30 @@ int main(int argc, char *argv[]) {
             perror("error: read");
             return 1;
         }
-        //else if (to_read == 0) {  // restart program
-            // accepted = 0;
-        //     return 0;  // 0 -> EOF
+        // else if (to_read == 0) {  // restart program
+        //     accepted = 0;
+        //     pthread_cancel();
+        //     pthread_exit();
         // }
+        if (buf[0] == 's') {
+            client_control_stop();
+        }
+        else if (buf[0] == 'g') {
+            client_control_release();
+        }
+        else if (buf[0] == 'p') {
+            if (buf[1] != NULL) {
+                db_print(buf[1]);
+            }
+            else {
+                db_print(stdout);
+            }
+        }
         // read stop go, etc.. call appropriate commands
         // buf at index zero (as long as to_read >0)
     }
     // set accepted to 0 when have EOF (stop accepting)
-
+    sig_handler_destructor(sig);
+    // cleanup follows...
     return 0;
 }
