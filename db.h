@@ -8,11 +8,12 @@ typedef struct node {
     char *value;
     struct node *lchild;
     struct node *rchild;
+    pthread_rwlock_t node_lock;
 } node_t;
 
 extern node_t head;
 
-node_t *search(char *name, node_t *parent, node_t **parentp);
+node_t *search(char *name, node_t *parent, node_t **parentp, int check);
 
 /**
   * The db_query() function calls search() to retrieve the node associated with the 
