@@ -337,8 +337,7 @@ int main(int argc, char *argv[]) {
         //     pthread_cancel();
         //     pthread_exit();
         // }
-        buf[to_read] =
-            '\0';
+        buf[to_read] = '\0';
         if (buf[0] == 's') {
             client_control_stop();
         }
@@ -347,6 +346,7 @@ int main(int argc, char *argv[]) {
         }
         else if (buf[0] == 'p') {
             if (buf[1] != NULL) {
+                sscanf(buf[1],'%s');
                 db_print(&buf[1]);
             }
             else {
