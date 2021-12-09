@@ -337,6 +337,8 @@ int main(int argc, char *argv[]) {
         //     pthread_cancel();
         //     pthread_exit();
         // }
+        buf[to_read] =
+            '\0';
         if (buf[0] == 's') {
             client_control_stop();
         }
