@@ -345,11 +345,10 @@ int main(int argc, char *argv[]) {
             client_control_release();
         }
         else if (buf[0] == 'p') {
-            char str[BUFLEN];
-            char buf_str[BUFLEN] = buf[1];
+            char *str[BUFLEN];
             if (buf[1] != NULL) {
-                sscanf(buf_str,"%s",&str);
-                db_print(&str);
+                sscanf(&buf[1],"%s",str);
+                db_print(str);
             }
             else {
                 db_print(stdout);
