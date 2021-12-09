@@ -346,8 +346,9 @@ int main(int argc, char *argv[]) {
         }
         else if (buf[0] == 'p') {
             char str[BUFLEN];
+            char buf_str[BUFLEN] = buf[1];
             if (buf[1] != NULL) {
-                sscanf(buf[1],"%s",&str);
+                sscanf(buf_str,"%s",&str);
                 db_print(&str);
             }
             else {
