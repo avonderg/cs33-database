@@ -105,6 +105,7 @@ void client_constructor(FILE *cxstr) { // is server()
         perror("malloc");
         exit(1);
     }
+    // what do i do if cxstr is null
     newClient->cxstr = cxstr;
     newClient->next = NULL;
     newClient->prev = NULL;
@@ -210,7 +211,7 @@ void delete_all() { // make sure you don't cancel before you pushed to cleanup (
             handle_error_en(err, "pthread_cancel");
         }
         pthread_mutex_lock(&server.num_client_threads);
-        server.num_client_threads--;
+        server.num_client_threads = 0;
         pthread_mutex_unlock(&server.num_client_threads);
         curr = curr->next;
     }
@@ -314,7 +315,7 @@ int main(int argc, char *argv[]) {
     sigemptyset(&signal);
     sigaddset(&signal, SIGPIPE);
     pthread_sigmask(SIG_BLOCK, &signal, NULL); // error check
-    sig_handler_t *sig = sig_handler_constructor();
+    // sig_handler_t *sig = sig_handler_constructor();
     pthread_t listener = start_listener(atoi(argv[1]), client_constructor);
     // how do i access source and dest buffers created within run_client
     // accepted = 1;
@@ -354,7 +355,7 @@ int main(int argc, char *argv[]) {
         // buf at index zero (as long as to_read >0)
     }
     // set accepted to 0 when have EOF (stop accepting)
-    sig_handler_destructor(sig);
+    // sig_handler_destructor(sig);
     // cleanup follows...
     return 0;
 }
