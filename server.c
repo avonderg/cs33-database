@@ -345,9 +345,10 @@ int main(int argc, char *argv[]) {
             client_control_release();
         }
         else if (buf[0] == 'p') {
+            char str[BUFLEN];
             if (buf[1] != NULL) {
-                sscanf(buf[1],'%s');
-                db_print(&buf[1]);
+                sscanf(buf[1],"%s",&str);
+                db_print(&str);
             }
             else {
                 db_print(stdout);
