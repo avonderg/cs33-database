@@ -349,7 +349,7 @@ int main(int argc, char *argv[]) {
         else if (to_read == 0) {  // restart program
             accepted = 0;
             pthread_cancel(listener);
-            pthread_exit(listener);
+            pthread_exit(NULL);
             delete_all();
             return 0;
         }
@@ -375,8 +375,6 @@ int main(int argc, char *argv[]) {
     }
     // set accepted to 0 when have EOF (stop accepting)
     sig_handler_destructor(sig);
-
-    //comm_serve
     // cleanup follows...
     return 0;
 }
