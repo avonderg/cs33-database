@@ -219,7 +219,7 @@ void delete_all() { // make sure you don't cancel before you pushed to cleanup (
     // pthread_cancel function.
     // check handout
     client_t *curr = thread_list_head;
-    while (curr->next != NULL) {
+    while (curr != NULL) {
         int err;
         if ((err = pthread_cancel(curr->thread)) != 0) { 
             handle_error_en(err, "pthread_cancel");
@@ -248,7 +248,7 @@ void thread_cleanup(void *arg) {
         client->prev->next = NULL;
     }
     else {
-        while (curr != NULL) {
+        while (curr->next != client) {
         curr = curr->next;
         }
         curr->next = client->next;
