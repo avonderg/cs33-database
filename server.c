@@ -202,7 +202,7 @@ void *run_client(void *arg) {
                 interpret_command(command,response,BUFLEN);
             }
         pthread_cleanup_pop(1);
-        return;
+        return NULL;
     }
     else {
         client_destructor(client);
@@ -210,7 +210,7 @@ void *run_client(void *arg) {
         if ((err = pthread_mutex_unlock(&thread_list_mutex)) != 0) { 
             handle_error_en(err, "pthread_mutex_unlock");
         }
-        return;
+        return NULL;
     }
 }
 // before you call, make sure thread list mutex is locked
