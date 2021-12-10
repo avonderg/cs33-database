@@ -242,8 +242,7 @@ void thread_cleanup(void *arg) {
     client_t *curr = thread_list_head;
     if (client == thread_list_head) { // if it is at the head of list
         thread_list_head = client->next;
-        client->prev = NULL;
-        client->next->prev = client->next;
+        client->next->prev = NULL;
     }
     else if (client->next == NULL) { // if it is at the end of the list
         client->prev->next = NULL;
