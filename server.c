@@ -346,11 +346,12 @@ int main(int argc, char *argv[]) {
             perror("error: read");
             return 1;
         }
-        // else if (to_read == 0) {  // restart program
-        //     accepted = 0;
-        //     pthread_cancel();
-        //     pthread_exit();
-        // }
+        else if (to_read == 0) {  // restart program
+            accepted = 0;
+            server.num_client_threads = 0;
+            pthread_cancel();
+            pthread_exit();
+        }
         buf[to_read] = '\0';
         if (buf[0] == 's') {
             client_control_stop();
@@ -361,8 +362,8 @@ int main(int argc, char *argv[]) {
         else if (buf[0] == 'p') {
             char *str[BUFLEN];
             if (&buf[1] != NULL) {
-                sscanf(&buf[1],"%s",str);
-                db_print(str);
+                sscanf(&buf[1],"%s",&str);
+                db_print(&str);
             }
             else {
                 db_print(NULL); // otherwise, print to stdout
