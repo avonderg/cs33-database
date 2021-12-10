@@ -365,7 +365,7 @@ int main(int argc, char *argv[]) {
                 db_print(str);
             }
             else {
-                db_print(STDOUT_FILENO);
+                db_print(NULL); // otherwise, print to stdout
             }
         }
         // read stop go, etc.. call appropriate commands
