@@ -67,24 +67,38 @@ void thread_cleanup(void *arg);
 // 1 if being accepted, 0 otherwise
 int accepted = 1;
 server_control_t server = {PTHREAD_MUTEX_INITIALIZER,PTHREAD_COND_INITIALIZER,0};
+client_control_t client = {PTHREAD_MUTEX_INITIALIZER,PTHREAD_COND_INITIALIZER,0};
 
 // Called by client threads to wait until progress is permitted
 void client_control_wait() {
     // TODO: Block the calling thread until the main thread calls
     // client_control_release(). See the client_control_t struct.
-
+   pthread_mutex_lock(&client.go_mutex);
+    while (client.stopped) { // if stopped = 1 (waiting)
+        pthread_cond_wait(&client.go, &client.go_mutex);
+    }
+   pthread_mutex_unlock(&client.go_mutex);
 }
 
 // Called by main thread to stop client threads
 void client_control_stop() {
     // TODO: Ensure that the next time client threads call client_control_wait()
     // at the top of the event loop in run_client, they will block.
+    pthread_mutex_lock(&client.go_mutex);
+    client.stopped = 1;
+    pthread_mutex_unlock(&client.go_mutex);
 }
 
 // Called by main thread to resume client threads
 void client_control_release() {
     // TODO: Allow clients that are blocked within client_control_wait()
     // to continue. See the client_control_t struct.
+
+    // setting to zero, broadcast to clients waiting (pthread)
+    pthread_mutex_lock(&client.go_mutex);
+    client.stopped = 0;
+    pthread_cond_broadcast(&client.go);
+    pthread_mutex_unlock(&client.go_mutex);
 }
 
 // Called by listener (in comm.c) to create a new client thread
