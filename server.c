@@ -360,7 +360,7 @@ int main(int argc, char *argv[]) {
         }
         else if (buf[0] == 'p') {
             char *str[BUFLEN];
-            if (buf[1] != NULL) {
+            if (&buf[1] != NULL) {
                 sscanf(&buf[1],"%s",str);
                 db_print(str);
             }
