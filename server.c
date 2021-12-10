@@ -280,7 +280,7 @@ void *monitor_signal(void *arg) {
         pthread_mutex_unlock(&thread_list_mutex);
       } 
     }
-    return;
+    return NULL;
 }
 
 sig_handler_t *sig_handler_constructor() {
