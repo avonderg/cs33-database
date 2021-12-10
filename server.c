@@ -348,9 +348,10 @@ int main(int argc, char *argv[]) {
         }
         else if (to_read == 0) {  // restart program
             accepted = 0;
-            server.num_client_threads = 0;
-            pthread_cancel();
-            pthread_exit();
+            pthread_cancel(listener);
+            pthread_exit(listener);
+            delete_all();
+            return 0;
         }
         buf[to_read] = '\0';
         if (buf[0] == 's') {
@@ -360,7 +361,7 @@ int main(int argc, char *argv[]) {
             client_control_release();
         }
         else if (buf[0] == 'p') {
-            char *str[BUFLEN];
+            char str[BUFLEN];
             if (&buf[1] != NULL) {
                 sscanf(&buf[1],"%s",&str);
                 db_print(&str);
@@ -374,6 +375,8 @@ int main(int argc, char *argv[]) {
     }
     // set accepted to 0 when have EOF (stop accepting)
     sig_handler_destructor(sig);
+
+    //comm_serve
     // cleanup follows...
     return 0;
 }
