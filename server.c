@@ -245,12 +245,7 @@ void thread_cleanup(void *arg) {
         client->prev->next = NULL;
     }
     else {
-        while (curr->next != client) {
-        curr = curr->next;
-        }
-        curr->next = client->next;
-        // curr->prev = curr;
-        // client->prev = curr;
+        client->prev->next = client->next;
         client->next->prev = client->prev;
     }
     pthread_mutex_unlock(&thread_list_mutex);
