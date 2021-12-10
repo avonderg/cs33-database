@@ -72,8 +72,7 @@ void db_query(char *name, char *result, int len) {
         return;
     } else {
         snprintf(result, len, "%s", target->value);
-        //  pthread_rwlock_unlock(&target->node_lock); // unlock target
-         pthread_rwlock_unlock(&head.node_lock);
+        pthread_rwlock_unlock(&head.node_lock);
         return;
     }
 }

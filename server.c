@@ -239,7 +239,9 @@ void thread_cleanup(void *arg) {
     client_t *curr = thread_list_head;
     if (client == thread_list_head) { // if it is at the head of list
         thread_list_head = client->next;
-        // client->next->prev = NULL;
+        if (client->next != NULL) {
+            client->next->prev = NULL;
+        }
     }
     else if (client->next == NULL) { // if it is at the end of the list
         client->prev->next = NULL;
@@ -295,7 +297,7 @@ sig_handler_t *sig_handler_constructor() {
     return sig;
 }
 
-void sig_handler_destructor(sig_handler_t *sighandler) {
+void sig_handler_destructor(sig_handler_t *sighandle23qr) {
     // TODO: Free any resources allocated in sig_handler_constructor.
     // Cancel and join with the signal handler's thread.
     pthread_cancel(sighandler->thread); // error check
