@@ -224,9 +224,6 @@ void delete_all() { // make sure you don't cancel before you pushed to cleanup (
         if ((err = pthread_cancel(curr->thread)) != 0) { 
             handle_error_en(err, "pthread_cancel");
         }
-        pthread_mutex_lock(&server.server_mutex);
-        server.num_client_threads = 0;
-        pthread_mutex_unlock(&server.server_mutex);
         curr = curr->next;
     }
     return;
@@ -258,6 +255,9 @@ void thread_cleanup(void *arg) {
     }
     pthread_mutex_unlock(&thread_list_mutex);
     client_destructor(client);
+    pthread_mutex_lock(&server.server_mutex);
+    server.num_client_threads--;
+    pthread_mutex_unlock(&server.server_mutex);
     return;
 }
 
