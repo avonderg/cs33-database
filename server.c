@@ -202,7 +202,7 @@ void *run_client(void *arg) {
                 interpret_command(command,response,BUFLEN);
             }
         pthread_cleanup_pop(1);
-        return NULL;
+        return;
     }
     else {
         client_destructor(client);
@@ -210,7 +210,7 @@ void *run_client(void *arg) {
         if ((err = pthread_mutex_unlock(&thread_list_mutex)) != 0) { 
             handle_error_en(err, "pthread_mutex_unlock");
         }
-        return NULL;
+        return;
     }
 }
 // before you call, make sure thread list mutex is locked
@@ -229,7 +229,7 @@ void delete_all() { // make sure you don't cancel before you pushed to cleanup (
         pthread_mutex_unlock(&server.server_mutex);
         curr = curr->next;
     }
-    return NULL;
+    return;
 }
 
 // Cleanup routine for client threads, called on cancels and exit.
@@ -257,7 +257,7 @@ void thread_cleanup(void *arg) {
     }
     pthread_mutex_unlock(&thread_list_mutex);
     client_destructor(client);
-    return NULL;
+    return;
 }
 
 // Code executed by the signal handler thread. For the purpose of this
@@ -280,7 +280,7 @@ void *monitor_signal(void *arg) {
         pthread_mutex_unlock(&thread_list_mutex);
       } 
     }
-    return NULL;
+    return;
 }
 
 sig_handler_t *sig_handler_constructor() {
@@ -361,11 +361,11 @@ int main(int argc, char *argv[]) {
         else if (buf[0] == 'p') {
             char *str[BUFLEN];
             if (buf[1] != NULL) {
-                sscanf(&buf[1],"%s",str);
-                db_print(str);
+                sscanf(&buf[1],"%s",&str);
+                db_print(&str);
             }
             else {
-                db_print(stdout);
+                db_print(STDOUT_FILENO);
             }
         }
         // read stop go, etc.. call appropriate commands
