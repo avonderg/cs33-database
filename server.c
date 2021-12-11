@@ -345,11 +345,15 @@ int main(int argc, char *argv[]) {
             return 1;
         }
         else if (to_read == 0) {  // restart program
-            accepted = 0;
-            pthread_cancel(listener);
-            pthread_exit(NULL);
+            sig_handler_destructor(sig);
+            pthread_mutex_lock(&thread_list_mutex); // thread safety
+            accepted = 0; 
             delete_all();
-            return 0;
+            pthread_mutex_unlock(&thread_list_mutex);
+            pthread_cancel(listener);
+            db_cleanup();
+            pthread_join(listener, NULL);
+            pthread_exit(NULL);
         }
         buf[to_read] = '\0';
         if (buf[0] == 's') {
@@ -372,7 +376,17 @@ int main(int argc, char *argv[]) {
         // buf at index zero (as long as to_read >0)
     }
     // set accepted to 0 when have EOF (stop accepting)
-    sig_handler_destructor(sig);
-    // cleanup follows...
+    // sig_handler_destructor(sig);
+    // // cleanup follows...
+    // // pthread_mutex_lock(&thread_list_mutex); // thread safety
+    // // accepted = 0; 
+    // // pthread_mutex_unlock(&thread_list_mutex);
+    // pthread_cancel(listener);
+    // ptherad_mutex_lock(&thread_list_mutex);
+    // delete_all();
+    // ptherad_mutex_lock(&thread_list_mutex);
+    // db_cleanup();
+    // pthread_join(listener, NULL);
+    // pthread_exit(NULL);
     return 0;
 }
