@@ -297,7 +297,7 @@ sig_handler_t *sig_handler_constructor() {
     return sig;
 }
 
-void sig_handler_destructor(sig_handler_t *sighandle23qr) {
+void sig_handler_destructor(sig_handler_t *sighandler) {
     // TODO: Free any resources allocated in sig_handler_constructor.
     // Cancel and join with the signal handler's thread.
     pthread_cancel(sighandler->thread); // error check
