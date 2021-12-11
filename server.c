@@ -254,6 +254,9 @@ void thread_cleanup(void *arg) {
     client_destructor(client);
     pthread_mutex_lock(&server.server_mutex);
     server.num_client_threads--;
+    if (server.num_client_threads == 0) {
+        pthread_cond_signal(&server.server_cond); // so its safe to call cleanup
+    }
     pthread_mutex_unlock(&server.server_mutex);
     return;
 }
@@ -272,7 +275,7 @@ void *monitor_signal(void *arg) {
     int signal;
     while(1) {
       sigwait(sig,&signal);
-      fprintf(stderr, "reached loop");
+    //   fprintf(stderr, "reached loop");
       if (signal == SIGINT){
         pthread_mutex_lock(&thread_list_mutex);
         delete_all();
