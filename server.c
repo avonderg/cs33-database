@@ -74,10 +74,11 @@ void client_control_wait() {
     // TODO: Block the calling thread until the main thread calls
     // client_control_release(). See the client_control_t struct.
    pthread_mutex_lock(&client.go_mutex);
+   pthread_cleanup_push(pthread_mutex_unlock, &client.go_mutex); // cancellation point
     while (client.stopped) { // if stopped = 1 (waiting)
         pthread_cond_wait(&client.go, &client.go_mutex);
     }
-   pthread_mutex_unlock(&client.go_mutex);
+   pthread_cleanup_pop(1);
 }
 
 // Called by main thread to stop client threads
@@ -86,6 +87,7 @@ void client_control_stop() {
     // at the top of the event loop in run_client, they will block.
     pthread_mutex_lock(&client.go_mutex);
     client.stopped = 1;
+    // print out message (demo)
     pthread_mutex_unlock(&client.go_mutex);
 }
 
@@ -98,6 +100,7 @@ void client_control_release() {
     pthread_mutex_lock(&client.go_mutex);
     client.stopped = 0;
     pthread_cond_broadcast(&client.go);
+    // print (demo)
     pthread_mutex_unlock(&client.go_mutex);
 }
 
@@ -278,6 +281,7 @@ void *monitor_signal(void *arg) {
     //   fprintf(stderr, "reached loop");
       if (signal == SIGINT){
         pthread_mutex_lock(&thread_list_mutex);
+        fprintf(stderr, "SIGINT received, cancelling all clients");
         delete_all();
         pthread_mutex_unlock(&thread_list_mutex);
       } 
