@@ -159,10 +159,7 @@ void *run_client(void *arg) {
     // You will need to modify this when implementing functionality for stop and
     // go!
     client_t *client = (client_t *) arg;
-    int err1;
-    if ((err1 = pthread_mutex_lock(&thread_list_mutex)) != 0) {
-        handle_error_en(err1, "pthread_mutex_lock");
-    }
+    pthread_mutex_lock(&thread_list_mutex);
     // ensure that clients are still being accepted
     if (accepted == 1) { 
         // use prev and next to insert
@@ -180,19 +177,10 @@ void *run_client(void *arg) {
             client->prev = curr;
             client->next = NULL;
         }
-        int err2;
-        if ((err2 = pthread_mutex_lock(&server.server_mutex)) != 0) { // lock to increment # clients
-            handle_error_en(err2, "pthread_mutex_lock");
-        }
+        pthread_mutex_lock(&server.server_mutex);// lock to increment # clients
         server.num_client_threads++;
-        int err3;
-        if ((err3 = pthread_mutex_unlock(&server.server_mutex)) != 0) { // lock to increment # clients
-            handle_error_en(err3, "pthread_mutex_unlock");
-        }
-        int err4;
-        if ((err4 = pthread_mutex_unlock(&thread_list_mutex)) != 0) { // lock to increment # clients
-            handle_error_en(err4, "pthread_mutex_unlock");
-        }
+        pthread_mutex_unlock(&server.server_mutex); // lock to increment # clients
+        pthread_mutex_unlock(&thread_list_mutex); // lock to increment # clients
         pthread_cleanup_push(thread_cleanup,client);
         // here, we process the commands
         // createa a buffer and call memset
@@ -209,10 +197,7 @@ void *run_client(void *arg) {
     }
     else {
         client_destructor(client);
-        int err;
-        if ((err = pthread_mutex_unlock(&thread_list_mutex)) != 0) { 
-            handle_error_en(err, "pthread_mutex_unlock");
-        }
+        pthread_mutex_unlock(&thread_list_mutex);
         return NULL;
     }
 }
@@ -300,16 +285,28 @@ sig_handler_t *sig_handler_constructor() {
     sigemptyset(&sig->set);
     sigaddset(&sig->set, SIGINT);
     // create thread
-    pthread_sigmask(SIG_BLOCK, &sig->set, 0); // error check
-    pthread_create(&sig->thread, 0, monitor_signal, &sig->set); // error check
+    int error1;
+    if ((error1 = pthread_sigmask(SIG_BLOCK, &sig->set, 0)) != 0) { // lock to increment # clients
+        handle_error_en(error1, "pthread_sigmask");
+    }
+    int error2;
+    if ((error2 = pthread_create(&sig->thread, 0, monitor_signal, &sig->set)) != 0) { // lock to increment # clients
+        handle_error_en(error2, "pthread_create");
+    }
     return sig;
 }
 
 void sig_handler_destructor(sig_handler_t *sighandler) {
     // TODO: Free any resources allocated in sig_handler_constructor.
     // Cancel and join with the signal handler's thread.
-    pthread_cancel(sighandler->thread); // error check
-    pthread_join(sighandler->thread, NULL); // error check
+    int error3;
+    if ((error3 = pthread_cancel(sighandler->thread)) != 0) { // lock to increment # clients
+        handle_error_en(error3, "pthread_cancel");
+    }
+    int error4;
+    if ((error4 = pthread_join(sighandler->thread, NULL)) != 0) { // lock to increment # clients
+        handle_error_en(error4, "pthread_join");
+    }
     free(sighandler);
 }
 
@@ -334,7 +331,10 @@ int main(int argc, char *argv[]) {
     sigset_t signal;
     sigemptyset(&signal);
     sigaddset(&signal, SIGPIPE);
-    pthread_sigmask(SIG_BLOCK, &signal, NULL); // error check
+    int error5;
+    if ((error5 = pthread_sigmask(SIG_BLOCK, &signal, NULL)) != 0) { // lock to increment # clients
+        handle_error_en(error5, "pthread_sigmask");
+    }
     sig_handler_t *sig = sig_handler_constructor();
     pthread_t listener = start_listener(atoi(argv[1]), client_constructor);
     // how do i access source and dest buffers created within run_client
@@ -353,10 +353,14 @@ int main(int argc, char *argv[]) {
             return 1;
         }
         else if (to_read == 0) {  // restart program
+            fprintf(stderr, "exiting database\n");
             sig_handler_destructor(sig);
             pthread_mutex_lock(&thread_list_mutex); // thread safety
             accepted = 0; 
-            delete_all();
+            delete_all(); // sends cancellation req to all clients, wait for last thread to finish destroying
+            while (server.num_client_threads > 0) {
+                pthread_cond_wait(&server.server_cond, NULL);
+            }
             pthread_mutex_unlock(&thread_list_mutex);
             pthread_cancel(listener);
             db_cleanup();
@@ -380,21 +384,6 @@ int main(int argc, char *argv[]) {
                 db_print(NULL); // otherwise, print to stdout
             }
         }
-        // read stop go, etc.. call appropriate commands
-        // buf at index zero (as long as to_read >0)
     }
-    // set accepted to 0 when have EOF (stop accepting)
-    // sig_handler_destructor(sig);
-    // // cleanup follows...
-    // // pthread_mutex_lock(&thread_list_mutex); // thread safety
-    // // accepted = 0; 
-    // // pthread_mutex_unlock(&thread_list_mutex);
-    // pthread_cancel(listener);
-    // ptherad_mutex_lock(&thread_list_mutex);
-    // delete_all();
-    // ptherad_mutex_lock(&thread_list_mutex);
-    // db_cleanup();
-    // pthread_join(listener, NULL);
-    // pthread_exit(NULL);
     return 0;
 }
