@@ -87,7 +87,7 @@ void client_control_stop() {
     // at the top of the event loop in run_client, they will block.
     pthread_mutex_lock(&client.go_mutex);
     client.stopped = 1;
-    // print out message (demo)
+    fprintf(stderr, "stopping all clients\n");
     pthread_mutex_unlock(&client.go_mutex);
 }
 
@@ -100,7 +100,7 @@ void client_control_release() {
     pthread_mutex_lock(&client.go_mutex);
     client.stopped = 0;
     pthread_cond_broadcast(&client.go);
-    // print (demo)
+    fprintf(stderr, "releasing all clients\n");
     pthread_mutex_unlock(&client.go_mutex);
 }
 
@@ -281,7 +281,7 @@ void *monitor_signal(void *arg) {
     //   fprintf(stderr, "reached loop");
       if (signal == SIGINT){
         pthread_mutex_lock(&thread_list_mutex);
-        fprintf(stderr, "SIGINT received, cancelling all clients");
+        fprintf(stderr, "SIGINT received, cancelling all clients\n");
         delete_all();
         pthread_mutex_unlock(&thread_list_mutex);
       } 
