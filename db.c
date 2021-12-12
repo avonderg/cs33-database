@@ -15,6 +15,7 @@
 // freed (it's allocated in the data region).
 node_t head = {"", "", 0, 0, PTHREAD_RWLOCK_INITIALIZER};
 
+// initializes a node, and all of its associated fields, including the rwlock
 node_t *node_constructor(char *arg_name, char *arg_value, node_t *arg_left,
                          node_t *arg_right) {
     size_t name_len = strlen(arg_name);
@@ -175,7 +176,12 @@ int db_remove(char *name) {
 
     return (1);
 }
-// 1 read, 0 write
+
+/**
+ * Depending on whether or not a read or write lock is specified for use, locks and unlocks each
+ * node and its fields accordingly. Searches the tree for a node containing "name", returns a
+ * pointer to the node if it is found, otherwise, returns zero.
+ * **/
 node_t *search(char *name, node_t *parent, node_t **parentpp, int check) {
     // Search the tree, starting at parent, for a node containing
     // name (the "target node").  Return a pointer to the node,

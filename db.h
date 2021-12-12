@@ -13,6 +13,15 @@ typedef struct node {
 
 extern node_t head;
 
+/**
+  * The search() function searches the tree, starting at the parent, for a node containing
+  * name (the "target node"). Returns a pointer to the node, if found, otherwise 0. 
+  * If parentpp is not 0, then it points to a location at which the address of the parent 
+  * of the target node is stored.  If the target node is not found, the location pointed to
+  * by parentpp is set to what would be the the address of the parent of the target node, 
+  * if it were there. Takes in an int check variable which indicates if a read or write
+  * lock is to be used, for thread safety.
+  */
 node_t *search(char *name, node_t *parent, node_t **parentp, int check);
 
 /**
