@@ -266,7 +266,6 @@ void thread_cleanup(void *arg) {
     // be in the list before this routine is ever run.
     client_t *client = (client_t *) arg;
     pthread_mutex_lock(&thread_list_mutex);
-    client_t *curr = thread_list_head;
     if (client == thread_list_head) { // if the client is at the head of list
         thread_list_head = client->next;
         if (client->next != NULL) { // if it was not the only item in the list
