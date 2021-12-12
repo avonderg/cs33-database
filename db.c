@@ -63,7 +63,6 @@ void node_destructor(node_t *node) {
 
 // always read locks
 void db_query(char *name, char *result, int len) {
-    // TODO: Make this thread-safe!
     node_t *target;
     pthread_rwlock_rdlock(&head.node_lock); // lock head
     target = search(name, &head, 0, 1);
@@ -79,7 +78,6 @@ void db_query(char *name, char *result, int len) {
 
 // always write locks
 int db_add(char *name, char *value) {
-    // TODO: Make this thread-safe!
     node_t *parent;
     node_t *target;
     node_t *newnode;
@@ -102,7 +100,6 @@ int db_add(char *name, char *value) {
 
 // write only
 int db_remove(char *name) {
-    // TODO: Make this thread-safe!
     node_t *parent;
     node_t *dnode;
     node_t *next;
@@ -188,7 +185,6 @@ node_t *search(char *name, node_t *parent, node_t **parentpp, int check) {
     // by parentpp is set to what would be the the address of the parent of
     // the target node, if it were there.
     //
-    // TODO: Make this thread-safe!
 
     node_t *next;
     node_t *result;
@@ -236,7 +232,6 @@ static inline void print_spaces(int lvl, FILE *out) {
 
 /* helper function for db_print */
 void db_print_recurs(node_t *node, int lvl, FILE *out) {
-    //TODO: Make this thread-safe!
     // print spaces to differentiate levels
     print_spaces(lvl, out);
     
