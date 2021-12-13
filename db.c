@@ -150,12 +150,11 @@ int db_remove(char *name) {
         pthread_rwlock_unlock(&parent->node_lock);
         next = dnode->rchild;
         node_t **pnext = &dnode->rchild;
-        pthread_rwlock_unlock(&next->node_lock); // unlock next
+        pthread_rwlock_wrlock(&next->node_lock); // lock next
         while (next->lchild != 0) {
             // work our way down the lchild chain, finding the smallest node
             // in the subtree.
-
-            pthread_rwlock_rdlock(&next->lchild->node_lock); // lock nextl
+            pthread_rwlock_wrlock(&next->lchild->node_lock); // lock nextl
             node_t *nextl = next->lchild;
             pnext = &next->lchild;
             pthread_rwlock_unlock(&next->node_lock); // unlock next
