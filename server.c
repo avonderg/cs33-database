@@ -86,7 +86,7 @@ void client_control_wait() {
    pthread_mutex_lock(&client.go_mutex);
    pthread_cleanup_push(pthread_mutex_unlock, &client.go_mutex); // cancellation point
     while (client.stopped) { // if stopped = 1, it has to wait
-        pthread_cond_wait(&client.go, &client.go_mutex);
+        pthread_cond_wait(&client.go, (void *) &client.go_mutex);
     }
    pthread_cleanup_pop(1);
 }
@@ -283,10 +283,10 @@ void thread_cleanup(void *arg) {
     client_destructor(client);
     pthread_mutex_lock(&server.server_mutex);
     server.num_client_threads--; // remove the client thread
+    pthread_mutex_unlock(&server.server_mutex);
     if (server.num_client_threads == 0) {
         pthread_cond_signal(&server.server_cond); // ensures it is safe to call cleanup
     }
-    pthread_mutex_unlock(&server.server_mutex);
     return;
 }
 
