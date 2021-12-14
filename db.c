@@ -7,6 +7,7 @@
 #include <string.h>
 // added
 #include <pthread.h>
+#include "./comm.h"
 
 #define MAXLEN 256
 
