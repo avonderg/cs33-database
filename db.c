@@ -52,7 +52,10 @@ node_t *node_constructor(char *arg_name, char *arg_value, node_t *arg_left,
 
     new_node->lchild = arg_left;
     new_node->rchild = arg_right;
-    pthread_rwlock_init(&new_node->node_lock, NULL);
+    int err8;
+    if ((err8 = pthread_rwlock_init(&new_node->node_lock, NULL)) != 0) { // error checking
+        handle_error_en(err8, "pthread_rwlock_init");
+    }
     return new_node;
 }
 
