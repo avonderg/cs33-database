@@ -427,8 +427,9 @@ int main(int argc, char *argv[]) {
             //     pthread_cond_wait(&server.server_cond, &server.server_mutex);
             // }
             // pthread_mutex_unlock(&server.server_mutex);
-            db_cleanup();
             pthread_cancel(listener);
+            db_cleanup();
+            // pthread_cancel(listener);
             pthread_join(listener, NULL);
             pthread_exit(NULL); // exits REPL
         }
