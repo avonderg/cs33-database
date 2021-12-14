@@ -421,9 +421,11 @@ int main(int argc, char *argv[]) {
             pthread_mutex_lock(&thread_list_mutex); // locks for thread safety
             accepted = 0; // no longer accepting clients
             delete_all(); // sends cancellation req to all clients, wait for last thread to finish destroying
+            pthread_mutex_lock(&server.server_mutex);
             while (server.num_client_threads > 0) { // waits for last thread
                 pthread_cond_wait(&server.server_cond, &server.server_mutex);
             }
+            pthread_mutex_unlock(&server.server_mutex);
             pthread_mutex_unlock(&thread_list_mutex);
             pthread_cancel(listener);
             db_cleanup();
