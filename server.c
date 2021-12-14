@@ -279,9 +279,8 @@ void thread_cleanup(void *arg) {
         client->prev->next = client->next;
         client->next->prev = client->prev;
     }
-    // pthread_mutex_unlock(&thread_list_mutex);
-    client_destructor(client);
     pthread_mutex_unlock(&thread_list_mutex);
+    client_destructor(client);
     pthread_mutex_lock(&server.server_mutex);
     server.num_client_threads--; // remove the client thread
     if (server.num_client_threads == 0) {
