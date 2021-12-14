@@ -418,6 +418,7 @@ int main(int argc, char *argv[]) {
             pthread_mutex_unlock(&thread_list_mutex);
             pthread_mutex_lock(&server.server_mutex);
             while (server.num_client_threads > 0) { // waits for last thread
+            fprintf(stderr, "stuck in loop\n");
                 pthread_cond_wait(&server.server_cond, &server.server_mutex);
             }
             pthread_mutex_unlock(&server.server_mutex);
@@ -426,7 +427,6 @@ int main(int argc, char *argv[]) {
             pthread_cancel(listener);
             pthread_join(listener, NULL);
             pthread_exit(NULL); // exits REPL
-            return;
         }
         buf[to_read] = '\0'; // null-terminates buffer
         if (buf[0] == 's') { // stop command
