@@ -422,7 +422,7 @@ int main(int argc, char *argv[]) {
             accepted = 0; // no longer accepting clients
             delete_all(); // sends cancellation req to all clients, wait for last thread to finish destroying
             while (server.num_client_threads > 0) { // waits for last thread
-                pthread_cond_wait(&server.server_cond, 0);
+                pthread_cond_wait(&server.server_cond, &server.server_mutex);
             }
             pthread_mutex_unlock(&thread_list_mutex);
             pthread_cancel(listener);
