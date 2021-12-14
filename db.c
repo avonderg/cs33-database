@@ -157,7 +157,7 @@ int db_remove(char *name) {
             pthread_rwlock_wrlock(&next->lchild->node_lock); // lock nextl
             node_t *nextl = next->lchild;
             pnext = &next->lchild;
-            pthread_rwlock_unlock(&next->lchild->node_lock); // unlock next
+            pthread_rwlock_unlock(&next->node_lock); // unlock next
             next = nextl;
         }
     
