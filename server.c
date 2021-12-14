@@ -439,13 +439,13 @@ int main(int argc, char *argv[]) {
         }
         else if (buf[0] == 'p') { // print command
             char str[BUFLEN];
-            if (&buf[1] != NULL) {
+            // if (&buf[1] != NULL) {
                 sscanf(&buf[1],"%s",str); // tokenizes filename
                 db_print(str);
-            }
-            else {
-                db_print(NULL); // otherwise, print to stdout
-            }
+            // }
+            // else {
+            //     db_print(NULL); // otherwise, print to stdout
+            // }
         }
     }
     return 0;
