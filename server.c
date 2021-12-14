@@ -84,7 +84,7 @@ client_control_t client = {PTHREAD_MUTEX_INITIALIZER,PTHREAD_COND_INITIALIZER,0}
  * **/
 void client_control_wait() {
    pthread_mutex_lock(&client.go_mutex);
-   pthread_cleanup_push(pthread_mutex_unlock, (void *) &client.go_mutex); // cancellation point
+   pthread_cleanup_push(pthread_mutex_unlock, &client.go_mutex); // cancellation point (CAST TO VOID???)
     while (client.stopped) { // if stopped = 1, it has to wait
         pthread_cond_wait(&client.go, &client.go_mutex);
     }
@@ -422,11 +422,11 @@ int main(int argc, char *argv[]) {
             accepted = 0; // no longer accepting clients
             delete_all(); // sends cancellation req to all clients, wait for last thread to finish destroying
             pthread_mutex_unlock(&thread_list_mutex);
-            pthread_mutex_lock(&server.server_mutex);
-            while (server.num_client_threads > 0) { // waits for last thread
-                pthread_cond_wait(&server.server_cond, &server.server_mutex);
-            }
-            pthread_mutex_unlock(&server.server_mutex);
+            // pthread_mutex_lock(&server.server_mutex);
+            // while (server.num_client_threads > 0) { // waits for last thread
+            //     pthread_cond_wait(&server.server_cond, &server.server_mutex);
+            // }
+            // pthread_mutex_unlock(&server.server_mutex);
             db_cleanup();
             pthread_cancel(listener);
             pthread_join(listener, NULL);
