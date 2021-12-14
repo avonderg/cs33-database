@@ -414,14 +414,14 @@ int main(int argc, char *argv[]) {
             sig_handler_destructor(sig);
             pthread_mutex_lock(&thread_list_mutex); // locks for thread safety
             accepted = 0; // no longer accepting clients
-            fprintf(stderr, "before delete all\n");
             delete_all(); // sends cancellation req to all clients, wait for last thread to finish destroying
-            fprintf(stderr, "past delete all\n");
             pthread_mutex_unlock(&thread_list_mutex);
+            fprintf(stderr, "before locking\n");
             pthread_mutex_lock(&server.server_mutex);
-            fprintf(stderr, "before while loop\n");
             while (server.num_client_threads > 0) { // waits for last thread
+                fprintf(stderr, "just entered loop\n");
                 pthread_cond_wait(&server.server_cond, &server.server_mutex);
+                fprintf(stderr, "just waited\n");
             }
             pthread_mutex_unlock(&server.server_mutex);
             // pthread_cancel(listener);
