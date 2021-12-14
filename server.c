@@ -84,7 +84,7 @@ client_control_t client = {PTHREAD_MUTEX_INITIALIZER,PTHREAD_COND_INITIALIZER,0}
  * **/
 void client_control_wait() {
    pthread_mutex_lock(&client.go_mutex);
-   pthread_cleanup_push(pthread_mutex_unlock, (void (*) (void*)) &client.go_mutex); // cancellation point (CAST TO VOID???)
+   pthread_cleanup_push((void (*) (void*)) pthread_mutex_unlock, &client.go_mutex); // cancellation point (CAST TO VOID???)
     while (client.stopped) { // if stopped = 1, it has to wait
         pthread_cond_wait(&client.go, &client.go_mutex);
     }
