@@ -212,20 +212,20 @@ void *run_client(void *arg) {
             client->prev = curr;
             client->next = NULL;
         }
+        pthread_mutex_unlock(&thread_list_mutex);
         pthread_mutex_lock(&server.server_mutex);// lock to increment # clients
         server.num_client_threads++;
         pthread_mutex_unlock(&server.server_mutex);
-        pthread_mutex_unlock(&thread_list_mutex);
         pthread_cleanup_push(thread_cleanup,client); // push thread_cleanup
         // here, we process the commands, create a buffer and call memset
         char response[BUFLEN];
         char command[BUFLEN];
         memset(command,0,BUFLEN);
         memset(response,0,BUFLEN);
-            while (comm_serve(client->cxstr,response,command) == 0) { // cancellation point
-                client_control_wait(); // makes sure running client (if stop = true), ie, makes sure threads wait
-                interpret_command(command,response,BUFLEN); // interprets command
-            }
+        while (comm_serve(client->cxstr,response,command) == 0) { // cancellation point
+            client_control_wait(); // makes sure running client (if stop = true), ie, makes sure threads wait
+            interpret_command(command,response,BUFLEN); // interprets command
+        }
         pthread_cleanup_pop(1);
         return NULL;
     }
