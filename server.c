@@ -426,6 +426,7 @@ int main(int argc, char *argv[]) {
             pthread_cancel(listener);
             pthread_join(listener, NULL);
             pthread_exit(NULL); // exits REPL
+            return;
         }
         buf[to_read] = '\0'; // null-terminates buffer
         if (buf[0] == 's') { // stop command
