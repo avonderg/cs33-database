@@ -4,7 +4,7 @@ Questions
 
 We want the server to be running multiple threads at any given point in time to allow for concurrency. This is because a multi-threaded solution is much easier to write, debug, and understand compared to one that is single-threaded. In start_listener, pthread() is called, which creates a thread executing independently of the caller. If successful, the ID is returned via the first parameter. We have the second argument set as null, and the third argument is the address of the function in which the new thread starts being executed. In this case, the function is listener(). Lastly, the third argument is the first function of the thread, that being server(). 
 
-Since the database server for this project will be multithreaded, then a separate thread will be assigned to each client’s request. Thus, at any given time, the server should be running as many threads as there are requests (on the queue to be connected). Each thread will therefore handle a client request. 
+Since the database server for this project will be multithreaded, then a separate thread will be assigned to each client’s request. Therefore, only one thread should be running on the server at any given time-- the one created by listener, which waits for other incoming client connections. 
 
 2. In the listener function, what do each of the following fields of the sockaddr_in struct represent: sin_family, sin_port, and sin_addr.s_addr?
 
