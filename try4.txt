@@ -1,0 +1,19 @@
+(root)
+ (null)
+ argentina buenos_aires
+  (null)
+  colombia bogota
+   brasil brasilia
+    bolivia la_paz
+     (null)
+     (null)
+    (null)
+   uruguay montevideo
+    peru lima
+     ecuador quito
+      (null)
+      (null)
+     (null)
+    venezuela caracas
+     (null)
+     (null)
